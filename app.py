@@ -1,71 +1,49 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, jsonify, render_template
 import psutil
-import socket
-import shutil
-import platform
+import requests
 import threading
 import time
-import requests
 from database import init_db, insert_data, get_last_50_data
 
 app = Flask(__name__)
-
-latest_data = {"cpu": 0, "ram": 0, "disk": 0, "network": "Offline", "cloud_status": {}}
-
-CLOUD_SERVICES = {
-    "AWS": "https://status.aws.amazon.com",
-    "Google": "https://www.google.com",
-    "GitHub": "https://www.github.com"
-}
-def check_cloud_status():
-    status = {}
-    for name, url in CLOUD_SERVICES.items():
-        try:
-            requests.get(url, timeout=3)
-            status[name] = "Online"
-        except:
-            status[name] = "Down"
-    return status
-def background_monitor():
-    global latest_data
+def collect_metrics():
     while True:
         cpu = psutil.cpu_percent(interval=1)
         ram = psutil.virtual_memory().percent
+        disk = psutil.disk_usage('/').percent
+        try:
+            requests.get("https://www.google.com", timeout=3)
+            network = "Online"
+        except:
+            network = "Offline"
 
-        disk_total, disk_used, disk_free = shutil.disk_usage("C:\\")
-        disk = round((disk_used / disk_total) * 100, 2)
-
-        cloud_status = check_cloud_status()
-
-        if cloud_status["AWS"] == "Online" and cloud_status["Google"] == "Online" and cloud_status["GitHub"] == "Online":
-            network = "All Cloud Online"
-        else:
-            network = "Cloud Issue"
-
-        latest_data = {"cpu": cpu, "ram": ram, "disk": disk, "network": network, "cloud_status": cloud_status}
         insert_data(cpu, ram, disk, network)
-        time.sleep(10)
+        time.sleep(5)
 
-@app.route("/")
-def dashboard():
-    os_name = platform.system() + " "+ platform.release()
-    return render_template("dashboard.html", os=os_name)
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-@app.route("/data")
+@app.route('/data')
 def data():
     return jsonify(get_last_50_data())
 
-@app.route("/status")
+@app.route('/status')
 def status():
-    alerts = []
-    if latest_data["cpu"] > 90: alerts.append("High CPU Usage")
-    if latest_data["ram"] > 90: alerts.append("High RAM Usage")
-    if latest_data["disk"] > 90: alerts.append("High Disk Usage")
-    if latest_data["network"] == "Cloud Issue": alerts.append("Cloud Service Down")
+    services = {
+        "AWS": "https://status.aws.amazon.com/",
+        "Google": "https://www.google.com/",
+        "GitHub": "https://www.githubstatus.com/"
+    }
+    status_data = {}
+    for name, url in services.items():
+        try:
+            r = requests.get(url, timeout=3)
+            status_data[name] = "Up" if r.status_code == 200 else "Down"
+        except:
+            status_data[name] = "Down"
+    return jsonify(status_data)
 
-    return jsonify({"current": latest_data, "alerts": alerts})
-
-if __name__ == "__main__":
-    init_db()
-    threading.Thread(target=background_monitor, daemon=True).start()
-    app.run(host="0.0.0.0", port=5000, debug=False)
+if __name__!= '__main__':
+    thread = threading.Thread(target=collect_metrics, daemon=True)
+    thread.start()

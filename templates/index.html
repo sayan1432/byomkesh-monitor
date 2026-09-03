@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Byomkesh Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial; background: #1a1a1a; color: white; text-align: center; }
+       .card { background: #2a2a2a; padding: 20px; margin: 10px; border-radius: 10px; display: inline-block; width: 200px; }
+        canvas { background: #2a2a2a; border-radius: 10px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Byomkesh System Monitor</h1>
+
+    <div class="card"><h3>CPU</h3><p id="cpu">0%</p></div>
+    <div class="card"><h3>RAM</h3><p id="ram">0%</p></div>
+    <div class="card"><h3>Disk</h3><p id="disk">0%</p></div>
+    <div class="card"><h3>Network</h3><p id="network">Offline</p></div>
+
+    <div class="card"><h3>AWS</h3><p id="aws">Checking...</p></div>
+    <div class="card"><h3>Google</h3><p id="google">Checking...</p></div>
+    <div class="card"><h3>GitHub</h3><p id="github">Checking...</p></div>
+
+    <canvas id="myChart" width="800" height="400"></canvas>
+
+<script>
+const ctx = document.getElementById('myChart');
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [
+            {label: 'CPU %', data: [], borderColor: 'red'},
+            {label: 'RAM %', data: [], borderColor: 'blue'},
+            {label: 'Disk %', data: [], borderColor: 'green'}
+        ]
+    }
+});
+
+function fetchData() {
+    fetch('/data').then(res => res.json()).then(data => {
+        if(data.length > 0){
+            const last = data[0];
+            document.getElementById('cpu').innerText = last[2] + '%';
+            document.getElementById('ram').innerText = last[3] + '%';
+            document.getElementById('disk').innerText = last[4] + '%';
+            document.getElementById('network').innerText = last[5];
+
+            chart.data.labels = data.map(d => d[1]).reverse();
+            chart.data.datasets[0].data = data.map(d => d[2]).reverse();
+            chart.data.datasets[1].data = data.map(d => d[3]).reverse();
+            chart.data.datasets[2].data = data.map(d => d[4]).reverse();
+            chart.update();
+        }
+    });
+    fetch('/status').then(res => res.json()).then(data => {
+        document.getElementById('aws').innerText = data.AWS;
+        document.getElementById('google').innerText = data.Google;
+        document.getElementById('github').innerText = data.GitHub;
+    });
+}
+setInterval(fetchData, 5000);
+fetchData();
+</script>
+</body>
+</html>

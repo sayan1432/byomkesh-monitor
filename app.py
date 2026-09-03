@@ -3,6 +3,7 @@ import psutil
 import requests
 import threading
 import time
+import socket
 from database import init_db, insert_data, get_last_50_data
 
 app = Flask(__name__)
@@ -33,6 +34,10 @@ def index():
 @app.route('/data')
 def data():
     return jsonify(get_last_50_data())
+@app.route('/info')
+def info():
+    hostname = socket.gethostname()
+    return jsonify({"hostname": hostname})
 
 @app.route('/status')
 def status():

@@ -70,12 +70,10 @@
                 document.getElementById('diskVal').innerText = data.current.disk + '%';
                 document.getElementById('netVal').innerText = data.current.network;
 
-                // Cloud Status Update
                 document.getElementById('awsVal').innerText = data.current.cloud_status.AWS;
                 document.getElementById('googleVal').innerText = data.current.cloud_status.Google;
                 document.getElementById('githubVal').innerText = data.current.cloud_status.GitHub;
 
-                // Color change based on status
                 document.getElementById('awsVal').className = data.current.cloud_status.AWS === 'Online'? 'online' : 'down';
                 document.getElementById('googleVal').className = data.current.cloud_status.Google === 'Online'? 'online' : 'down';
                 document.getElementById('githubVal').className = data.current.cloud_status.GitHub === 'Online'? 'online' : 'down';

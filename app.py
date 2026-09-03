@@ -17,8 +17,6 @@ CLOUD_SERVICES = {
     "Google": "https://www.google.com",
     "GitHub": "https://www.github.com"
 }
-
-# 1. AGE EI FUNCTION TA RAKHO
 def check_cloud_status():
     status = {}
     for name, url in CLOUD_SERVICES.items():
@@ -28,8 +26,6 @@ def check_cloud_status():
         except:
             status[name] = "Down"
     return status
-
-# 2. TARPOR EI FUNCTION TA
 def background_monitor():
     global latest_data
     while True:
@@ -39,7 +35,7 @@ def background_monitor():
         disk_total, disk_used, disk_free = shutil.disk_usage("C:\\")
         disk = round((disk_used / disk_total) * 100, 2)
 
-        cloud_status = check_cloud_status() # ekhane call korche
+        cloud_status = check_cloud_status()
 
         if cloud_status["AWS"] == "Online" and cloud_status["Google"] == "Online" and cloud_status["GitHub"] == "Online":
             network = "All Cloud Online"
@@ -52,7 +48,7 @@ def background_monitor():
 
 @app.route("/")
 def dashboard():
-    os_name = platform.system() + " " + platform.release() # ekhane + chilo, space hobe
+    os_name = platform.system() + " " + platform.release()
     return render_template("dashboard.html", os=os_name)
 
 @app.route("/data")

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BYOMKESH</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial; margin: 20px; background: #f5f5f5; color: #333; }
+      .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+      .cards { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+      .card { background: #ffffff; padding: 15px; border-radius: 8px; flex: 1; min-width: 120px; text-align: center; border: 1px solid #ddd; }
+      .card h3 { margin: 0; font-size: 16px; color: #555; }
+      .card p { margin: 5px 0 0; font-size: 24px; font-weight: bold; }
+      .alert { background: #ffdddd; color: #d8000c; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #d8000c; display: none; }
+      .online { color: green; }
+      .down { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>System Monitor Dashboard</h1>
+        <p><b>OS:</b> {{ os }}</p>
+
+        <div id="alertBox" class="alert"></div>
+
+        <div class="cards">
+            <div class="card"><h3>CPU</h3><p id="cpuVal">0%</p></div>
+            <div class="card"><h3>RAM</h3><p id="ramVal">0%</p></div>
+            <div class="card"><h3>Disk</h3><p id="diskVal">0%</p></div>
+            <div class="card"><h3>Network</h3><p id="netVal">Offline</p></div>
+        </div>
+
+        <h3>Cloud Service Status</h3>
+        <div class="cards" id="cloudCards">
+            <div class="card"><h3>AWS</h3><p id="awsVal">Checking...</p></div>
+            <div class="card"><h3>Google</h3><p id="googleVal">Checking...</p></div>
+            <div class="card"><h3>GitHub</h3><p id="githubVal">Checking...</p></div>
+        </div>
+
+        <canvas id="systemChart"></canvas>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('systemChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'CPU %', borderColor: 'red', data: [], tension: 0.3 },
+                    { label: 'RAM %', borderColor: 'blue', data: [], tension: 0.3 },
+                    { label: 'Disk %', borderColor: 'green', data: [], tension: 0.3 }
+                ]
+            }
+        });
+
+        function fetchData() {
+            fetch('/data').then(res => res.json()).then(data => {
+                chart.data.labels = data.map(row => row[0]).reverse();
+                chart.data.datasets[0].data = data.map(row => row[1]).reverse();
+                chart.data.datasets[1].data = data.map(row => row[2]).reverse();
+                chart.data.datasets[2].data = data.map(row => row[3]).reverse();
+                chart.update();
+            });
+        }
+
+        function fetchStatus() {
+            fetch('/status').then(res => res.json()).then(data => {
+                document.getElementById('cpuVal').innerText = data.current.cpu + '%';
+                document.getElementById('ramVal').innerText = data.current.ram + '%';
+                document.getElementById('diskVal').innerText = data.current.disk + '%';
+                document.getElementById('netVal').innerText = data.current.network;
+
+                // Cloud Status Update
+                document.getElementById('awsVal').innerText = data.current.cloud_status.AWS;
+                document.getElementById('googleVal').innerText = data.current.cloud_status.Google;
+                document.getElementById('githubVal').innerText = data.current.cloud_status.GitHub;
+
+                // Color change based on status
+                document.getElementById('awsVal').className = data.current.cloud_status.AWS === 'Online'? 'online' : 'down';
+                document.getElementById('googleVal').className = data.current.cloud_status.Google === 'Online'? 'online' : 'down';
+                document.getElementById('githubVal').className = data.current.cloud_status.GitHub === 'Online'? 'online' : 'down';
+
+                const alertBox = document.getElementById('alertBox');
+                if(data.alerts.length > 0){
+                    alertBox.style.display = 'block';
+                    alertBox.innerText = 'ALERT: ' + data.alerts.join(', ');
+                } else {
+                    alertBox.style.display = 'none';
+                }
+            });
+        }
+
+        setInterval(fetchData, 5000);
+        setInterval(fetchStatus, 2000);
+        fetchData();
+        fetchStatus();
+    </script>
+</body>
+</html>

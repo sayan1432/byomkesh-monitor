@@ -17,3 +17,5 @@ def insert_data(cpu, ram, disk, network):
 def get_last_50_data():
     c.execute("SELECT * FROM metrics ORDER BY timestamp DESC LIMIT 50")
     return c.fetchall()
+
+init_db()

@@ -4,9 +4,10 @@ import datetime
 conn = sqlite3.connect('monitor.db', check_same_thread=False)
 c = conn.cursor()
 
-c.execute('''CREATE TABLE IF NOT EXISTS metrics
-             (timestamp TEXT, cpu REAL, ram REAL, disk REAL, network TEXT)''')
-conn.commit()
+def init_db():
+    c.execute('''CREATE TABLE IF NOT EXISTS metrics
+                 (timestamp TEXT, cpu REAL, ram REAL, disk REAL, network TEXT)''')
+    conn.commit()
 
 def insert_data(cpu, ram, disk, network):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

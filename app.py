@@ -6,7 +6,7 @@ import platform
 import threading
 import time
 import requests
-from database import insert_data, get_last_50_data
+from database import init_db, insert_data, get_last_50_data
 
 app = Flask(__name__)
 
@@ -48,7 +48,7 @@ def background_monitor():
 
 @app.route("/")
 def dashboard():
-    os_name = platform.system() + " " + platform.release()
+    os_name = platform.system() + " "+ platform.release()
     return render_template("dashboard.html", os=os_name)
 
 @app.route("/data")
@@ -66,5 +66,6 @@ def status():
     return jsonify({"current": latest_data, "alerts": alerts})
 
 if __name__ == "__main__":
+    init_db()
     threading.Thread(target=background_monitor, daemon=True).start()
     app.run(host="0.0.0.0", port=5000, debug=False)

@@ -10,7 +10,13 @@ def collect_metrics():
     while True:
         cpu = psutil.cpu_percent(interval=1)
         ram = psutil.virtual_memory().percent
-        disk = psutil.disk_usage('/').percent
+        
+        # Render compatible disk check
+        try:
+            disk = psutil.disk_usage('/opt/render').percent 
+        except:
+            disk = 0.0 # Jodi na pay to 0 dekhabe
+
         try:
             requests.get("https://www.google.com", timeout=3)
             network = "Online"
